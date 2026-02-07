@@ -1,24 +1,26 @@
 <!DOCTYPE html>
-<html lang="no" class="scroll-smooth">
+<html lang="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unge Vil – Brand Guide v0.6 ALPHA</title>
+    <title>Unge Vil - Tilskuddsoversikt</title>
     <link rel="icon" type="image/png" href="favicon.png">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-    <!-- Configuration -->
     <script>
         tailwind.config = {
-            darkMode: 'class', // Enable manual dark mode
+            darkMode: 'class', // Enable manual dark mode toggling
             theme: {
                 extend: {
                     colors: {
@@ -27,389 +29,776 @@
                             DEFAULT: '#9333EA', // Hovedlilla
                             dark: '#7e22ce',
                             bg: '#fbf7ff',
-                            mint: '#2DD4BF', // ATLAS Accent
-                            gold: '#FBBF24', // Spark Primary
-                            coral: '#FB7185', // Creative
-                            navy: '#1e1b4b', // ATLAS Primary
-                        },
-                        gray: {
-                            850: '#1f2937',
-                            900: '#111827',
-                            950: '#030712',
+                            mint: '#2DD4BF', // Godkjent/Vekst
+                            gold: '#FBBF24', // Pågående/Energi
+                            coral: '#FB7185', // Avslag/Kreativitet
+                            navy: '#1e1b4b', // Tekst
+                            blue: '#3b82f6'  // Sendt/Info
                         }
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
-                    },
-                    backgroundImage: {
-                        'spark-pattern': "linear-gradient(135deg, #FBBF24 25%, transparent 25%), linear-gradient(225deg, #FBBF24 25%, transparent 25%), linear-gradient(45deg, #FBBF24 25%, transparent 25%), linear-gradient(315deg, #FBBF24 25%, transparent 25%)",
                     }
                 }
             }
         }
     </script>
-    
+
     <style>
-        .spark-bg-pattern {
-            background-color: #1a1a1a;
-            background-image: radial-gradient(#FBBF24 1px, transparent 1px);
-            background-size: 30px 30px;
+        body {
+            font-family: 'Inter', sans-serif;
         }
-        .atlas-grid {
-            background-image: linear-gradient(to right, rgba(45, 212, 191, 0.1) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(45, 212, 191, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        /* Custom Scrollbar for Dark Mode feel */
+        
+        /* Shimmer effect adapted for dark mode */
+        .shimmer {
+            animation: shimmer 2s infinite linear;
+            background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-size: 1000px 100%;
+        }
+        .dark .shimmer {
+            background: linear-gradient(to right, #1f2937 0%, #374151 20%, #1f2937 40%, #1f2937 100%);
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: transparent; 
+            background: #f1f1f1; 
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #1f2937; 
         }
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
+            background: #d8b4fe; 
             border-radius: 4px;
         }
-        .dark ::-webkit-scrollbar-thumb {
-            background: #4b5563; 
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9333EA; 
+        }
+
+        /* View Toggle Active State */
+        .view-btn.active {
+            background-color: white;
+            color: #9333EA;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .dark .view-btn.active {
+            background-color: #374151; /* Gray-700 */
+            color: #a855f7; /* UngeVil Light */
+        }
+        .view-btn {
+            color: #9CA3AF;
+        }
+        .view-btn:hover:not(.active) {
+            color: #6B7280;
+        }
+        .dark .view-btn:hover:not(.active) {
+            color: #D1D5DB;
+        }
+        
+        /* Favorite Animation */
+        .heart-beat:active {
+            transform: scale(1.2);
         }
     </style>
 </head>
-<body class="font-sans text-gray-800 bg-white dark:bg-gray-950 dark:text-gray-100 selection:bg-ungevil selection:text-white overflow-x-hidden transition-colors duration-300">
+<body class="bg-gray-50 dark:bg-gray-900 text-ungevil-navy dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
 
-    <!-- Dark Mode Toggle (Fixed) -->
-    <button id="theme-toggle" class="fixed bottom-6 right-6 z-[100] bg-gray-900 dark:bg-white text-white dark:text-gray-900 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition duration-300 border border-gray-200 dark:border-gray-800" aria-label="Toggle Dark Mode">
-        <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
-        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
-    </button>
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20">
+                <div class="flex items-center gap-3">
+                    <!-- Logo container -->
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <!-- Defaulting to light-line based on user feedback that names are swapped -->
+                        <img id="navbar-logo" class="h-10 w-auto" src="UngeVil-light-line.png" alt="Unge Vil Logo" onerror="this.onerror=null; this.src='https://placehold.co/150x50?text=Unge+Vil';">
+                        <div class="hidden md:block h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
+                        <span class="text-lg font-semibold text-gray-700 dark:text-gray-200 tracking-tight hidden md:block">Tilskuddsportal</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Dark Mode Toggle -->
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none transition-colors" title="Bytt mellom lys/mørk modus">
+                        <i id="dark-mode-icon" class="fa-solid fa-moon text-lg"></i>
+                    </button>
 
-    <!-- ALPHA Banner -->
-    <div class="fixed top-0 left-0 right-0 bg-black dark:bg-ungevil-gold text-white dark:text-black text-[10px] font-black text-center py-2 z-[60] uppercase tracking-[0.3em] border-b border-gray-800 dark:border-yellow-600/30">
-        Visual Identity Guide v0.6 ALPHA
-    </div>
+                    <div class="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
 
-    <!-- Sidebar -->
-    <div class="fixed inset-y-0 left-0 w-64 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 hidden lg:flex flex-col z-40 mt-8 transition-colors duration-300">
-        <div class="p-8 flex-1 overflow-y-auto">
-            <!-- Logo changes based on theme, handled by script or simple opacity trick if PNG is transparent -->
-            <div class="mb-12 relative h-6 w-auto">
-                <img src="UngeVil-dark-line.png" alt="Unge Vil" class="absolute top-0 left-0 h-full w-auto opacity-90 dark:opacity-0 transition-opacity">
-                <img src="UngeVil-light-line.png" alt="Unge Vil" class="absolute top-0 left-0 h-full w-auto opacity-0 dark:opacity-100 transition-opacity">
+                    <button onclick="toggleOnlyFavorites()" id="favFilterBtn" class="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-ungevil-DEFAULT dark:hover:text-ungevil-light transition-colors flex items-center gap-2 px-3 py-1 rounded-full hover:bg-purple-50 dark:hover:bg-gray-700">
+                        <i class="fa-regular fa-heart"></i> <span class="hidden sm:inline">Mine favoritter</span>
+                    </button>
+                    
+                    <div class="h-4 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
+                    
+                    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQMpKXME5JFZ2Xgpy0zGYLpXATZBxR0tXtkk_hEKPzqovFlaBExE9wve1piVfmpTvkAzg5c5Ly5A3IY/pub?output=csv" target="_blank" class="text-sm text-ungevil-DEFAULT dark:text-ungevil-light hover:text-ungevil-dark font-medium transition-colors hidden sm:inline-flex items-center">
+                        <i class="fa-solid fa-table me-1"></i> Data
+                    </a>
+                </div>
             </div>
-            
-            <nav class="space-y-8">
-                <div>
-                    <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Core Assets</p>
-                    <ul class="space-y-1">
-                        <li><a href="#logo" class="block px-3 py-2 text-sm font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm transition">Logo & Mark</a></li>
-                        <li><a href="#farger" class="block px-3 py-2 text-sm font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm transition">Fargepalett</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">The Brands</p>
-                    <ul class="space-y-1">
-                        <li><a href="#atlas" class="block px-3 py-2 text-sm font-bold rounded-lg text-ungevil-navy dark:text-ungevil-mint bg-ungevil-mint/10 dark:bg-ungevil-mint/5 border border-ungevil-mint/20 dark:border-ungevil-mint/10 flex items-center gap-2 transition hover:bg-ungevil-mint/20"><i data-lucide="map" class="w-3 h-3"></i> ATLAS Modellen</a></li>
-                        <li><a href="#spark" class="block px-3 py-2 text-sm font-bold rounded-lg text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/30 flex items-center gap-2 transition hover:bg-yellow-100 dark:hover:bg-yellow-900/30"><i data-lucide="zap" class="w-3 h-3"></i> Create A Spark</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Visual Tools</p>
-                    <ul class="space-y-1">
-                        <li><a href="#some" class="block px-3 py-2 text-sm font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm transition">Social Presence</a></li>
-                    </ul>
-                </div>
-            </nav>
         </div>
-    </div>
+    </nav>
 
     <!-- Main Content -->
-    <main class="lg:ml-64 p-8 md:p-20 max-w-6xl mt-8">
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         
-        <!-- Header -->
-        <header class="mb-32">
-            <span class="text-[10px] font-black text-ungevil dark:text-ungevil-light uppercase tracking-[0.5em] block mb-4">Internal Design Draft</span>
-            <h1 class="text-6xl md:text-8xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9] mb-12">
-                Brand System<br>
-                <span class="text-gray-300 dark:text-gray-600">Unge Vil.</span>
-            </h1>
-            <div class="h-2 w-32 bg-ungevil rounded-full"></div>
-        </header>
+        <!-- Welcome & Stats Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Oversikt over støtteordninger</h1>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">Her finner du status på søknader vi jobber med, har sendt, eller vurderer.</p>
 
-        <!-- Logo Section -->
-        <section id="logo" class="mb-40 scroll-mt-24">
-            <h2 class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.4em] mb-12">01. Logo & Mark</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div class="group">
-                    <!-- Note: The card background stays light to demonstrate the dark logo usage -->
-                    <div class="bg-gray-50 aspect-video rounded-3xl border border-gray-100 dark:border-gray-800 flex items-center justify-center p-12 transition-all hover:bg-white hover:shadow-2xl">
-                        <img src="UngeVil-light-line.png" class="h-14 w-auto object-contain">
-                    </div>
-                    <p class="mt-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Dark on Light</p>
-                </div>
-                <div class="group">
-                    <div class="bg-ungevil aspect-video rounded-3xl flex items-center justify-center p-12 transition-all hover:shadow-2xl hover:shadow-purple-200 dark:hover:shadow-purple-900/50">
-                        <img src="UngeVil-dark-line.png" class="h-14 w-auto object-contain">
-                    </div>
-                    <p class="mt-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Light on Brand</p>
-                </div>
+            <!-- Stats Grid -->
+            <div id="stats-container" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <!-- Populated by JS -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm shimmer h-24"></div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm shimmer h-24"></div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm shimmer h-24"></div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm shimmer h-24"></div>
             </div>
+        </div>
 
-            <div class="mt-10 flex flex-col md:flex-row items-center gap-10 bg-gray-50 dark:bg-gray-900 p-10 rounded-[2rem] border border-gray-100 dark:border-gray-800 transition-colors">
-                <img src="favicon.png" class="w-20 h-20 rounded-2xl shadow-xl border-4 border-white dark:border-gray-800 object-contain bg-white">
-                <div class="flex-1">
-                    <h3 class="font-black text-gray-900 dark:text-white uppercase text-xs tracking-[0.2em] mb-2">The Icon Mark</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Brukes som profilbilde og favicon der plassen er begrenset.</p>
-                </div>
-                <a href="favicon.png" download class="text-[10px] font-black uppercase bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white px-6 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition shadow-sm">Get Favicon</a>
-            </div>
-        </section>
-
-        <!-- Farger -->
-        <section id="farger" class="mb-40 scroll-mt-24">
-            <h2 class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.4em] mb-12">02. Fargepalett</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div class="space-y-4">
-                    <div class="h-48 rounded-3xl bg-ungevil shadow-sm border border-black/5 dark:border-white/5"></div>
-                    <div>
-                        <p class="text-xs font-black uppercase text-gray-900 dark:text-white">Brand Purple</p>
-                        <p class="text-[10px] font-mono text-gray-400">#9333EA</p>
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    <div class="h-48 rounded-3xl bg-ungevil-navy shadow-sm border border-black/5 dark:border-white/5"></div>
-                    <div>
-                        <p class="text-xs font-black uppercase text-gray-900 dark:text-white">Deep Navy</p>
-                        <p class="text-[10px] font-mono text-gray-400">#1E1B4B</p>
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    <div class="h-48 rounded-3xl bg-ungevil-mint shadow-sm border border-black/5 dark:border-white/5"></div>
-                    <div>
-                        <p class="text-xs font-black uppercase text-gray-900 dark:text-white">ATLAS Mint</p>
-                        <p class="text-[10px] font-mono text-gray-400">#2DD4BF</p>
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    <div class="h-48 rounded-3xl bg-ungevil-gold shadow-sm border border-black/5 dark:border-white/5"></div>
-                    <div>
-                        <p class="text-xs font-black uppercase text-gray-900 dark:text-white">Spark Gold</p>
-                        <p class="text-[10px] font-mono text-gray-400">#FBBF24</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ATLAS Section -->
-        <section id="atlas" class="mb-40 scroll-mt-24">
-            <h2 class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.4em] mb-12">03. ATLAS Modellen</h2>
-            
-            <div class="bg-ungevil-navy rounded-[3rem] p-10 md:p-20 overflow-hidden relative mb-12 border border-white/5 atlas-grid shadow-2xl">
+        <!-- Filters & Search -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6 sticky top-24 z-40 transition-all hover:shadow-md">
+            <div class="flex flex-col xl:flex-row gap-4 justify-between items-center">
                 
-                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                    <div>
-                        <span class="text-ungevil-mint font-black uppercase text-[10px] tracking-[0.5em] block mb-4">Navigasjon & Struktur</span>
-                        <h3 class="text-5xl font-black text-white tracking-tighter mb-8 leading-none">
-                            ATLAS<br><span class="text-ungevil-mint">System.</span>
-                        </h3>
-                        <p class="text-gray-400 text-lg mb-10 leading-relaxed">
-                            Vår systemiske tilnærming til bærekraftig utvikling.
-                        </p>
-                        
-                        <!-- Visual Swatches -->
-                        <div class="flex gap-4">
-                            <div class="h-20 w-32 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-end p-3">
-                                <span class="text-[10px] text-gray-400 font-mono">NAVY</span>
-                            </div>
-                            <div class="h-20 w-32 rounded-2xl bg-ungevil-mint flex flex-col justify-end p-3">
-                                <span class="text-[10px] text-ungevil-navy font-bold font-mono">MINT</span>
-                            </div>
-                        </div>
+                <!-- Search -->
+                <div class="relative w-full xl:w-80">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-search text-gray-400 dark:text-gray-500"></i>
+                    </div>
+                    <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg leading-5 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:border-ungevil-DEFAULT focus:ring-1 focus:ring-ungevil-DEFAULT sm:text-sm transition duration-150 ease-in-out" placeholder="Søk etter navn, formål...">
+                </div>
+
+                <!-- Filters & View Toggle -->
+                <div class="flex flex-wrap gap-2 w-full xl:w-auto justify-end items-center">
+                    
+                    <select id="sortFilter" class="block w-full sm:w-auto pl-3 pr-8 py-2.5 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-ungevil-DEFAULT focus:border-ungevil-DEFAULT sm:text-sm rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="deadline">Sorter: Frist (Snarest)</option>
+                        <option value="name">Sorter: Navn (A-Å)</option>
+                        <option value="sum">Sorter: Beløp (Høyest)</option>
+                    </select>
+
+                    <select id="statusFilter" class="block w-full sm:w-auto pl-3 pr-8 py-2.5 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-ungevil-DEFAULT focus:border-ungevil-DEFAULT sm:text-sm rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="all">Alle Statuser</option>
+                        <!-- Options populated by JS -->
+                    </select>
+                    
+                    <select id="deadlineFilter" class="block w-full sm:w-auto pl-3 pr-8 py-2.5 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-ungevil-DEFAULT focus:border-ungevil-DEFAULT sm:text-sm rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="all">Alle Frister</option>
+                        <option value="upcoming">Kommende</option>
+                        <option value="passed">Passerte</option>
+                        <option value="ongoing">Løpende</option>
+                    </select>
+
+                    <div class="h-8 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block mx-1"></div>
+
+                    <!-- View Toggle -->
+                    <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                        <button onclick="setView('grid')" id="btn-grid" class="view-btn active p-2 rounded-md transition-all" title="Kortvisning">
+                            <i class="fa-solid fa-border-all"></i>
+                        </button>
+                        <button onclick="setView('list')" id="btn-list" class="view-btn p-2 rounded-md transition-all" title="Listevisning">
+                            <i class="fa-solid fa-list-ul"></i>
+                        </button>
                     </div>
 
-                    <!-- Atlas Visuals -->
-                    <div class="space-y-6">
-                        <!-- Card Style 1 -->
-                        <div class="bg-white rounded-2xl p-6 shadow-xl flex items-center gap-4 border-l-8 border-ungevil-mint dark:bg-gray-800 dark:text-white">
-                            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-ungevil-navy dark:text-ungevil-mint">
-                                <i data-lucide="compass" class="w-6 h-6"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-900 dark:text-white">Metodekort</h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Verktøy for kartlegging.</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Card Style 2 -->
-                        <div class="bg-ungevil-navy rounded-2xl p-6 shadow-xl flex items-center gap-4 border border-white/10">
-                            <div class="w-12 h-12 bg-ungevil-mint rounded-lg flex items-center justify-center text-ungevil-navy font-bold">
-                                01
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-white">Fasekort</h4>
-                                <p class="text-xs text-gray-400">Systematisk prosess.</p>
-                            </div>
-                        </div>
-
-                        <!-- Icon Set -->
-                        <div class="flex gap-4 mt-8 pt-8 border-t border-white/10">
-                            <i data-lucide="map" class="text-ungevil-mint w-6 h-6"></i>
-                            <i data-lucide="share-2" class="text-ungevil-mint w-6 h-6"></i>
-                            <i data-lucide="anchor" class="text-ungevil-mint w-6 h-6"></i>
-                            <i data-lucide="book-open" class="text-ungevil-mint w-6 h-6"></i>
-                        </div>
-                    </div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Create A Spark Section -->
-        <section id="spark" class="mb-40 scroll-mt-24">
-            <h2 class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.4em] mb-12">04. Create A Spark</h2>
-            
-            <div class="bg-[#111] rounded-[3rem] p-10 md:p-16 overflow-hidden relative spark-bg-pattern shadow-2xl">
-                
-                <div class="relative z-10">
-                    <div class="text-center mb-20">
-                        <div class="inline-block bg-ungevil-gold text-black px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">
-                            Sub-Brand Identity
-                        </div>
-                        <h3 class="text-8xl md:text-9xl font-black italic text-white tracking-tighter leading-none mb-4">
-                            CREATE A <span class="text-ungevil-gold">SPARK</span>
-                        </h3>
-                        <p class="text-gray-500 text-sm font-mono uppercase tracking-widest">Energy / Innovation / Speed</p>
-                    </div>
-
-                    <!-- Stickers & Elements -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        
-                        <!-- Sticker 1 -->
-                        <div class="aspect-square bg-ungevil-gold rounded-full flex items-center justify-center p-8 transform -rotate-12 border-4 border-white shadow-2xl hover:scale-110 transition cursor-pointer">
-                            <span class="font-black text-black text-xl text-center leading-none italic">JUST<br>START.</span>
-                        </div>
-
-                        <!-- Sticker 2 -->
-                        <div class="aspect-square bg-white rounded-2xl flex flex-col items-center justify-center p-4 transform rotate-6 shadow-2xl hover:scale-110 transition cursor-pointer">
-                            <i data-lucide="zap" class="w-12 h-12 text-ungevil-gold fill-current mb-2"></i>
-                            <span class="font-bold text-black text-xs uppercase">High Voltage</span>
-                        </div>
-
-                        <!-- Sticker 3 -->
-                        <div class="aspect-square bg-transparent border-4 border-ungevil-gold rounded-full flex items-center justify-center p-4 transform -rotate-3 hover:scale-110 transition cursor-pointer border-dashed">
-                             <span class="font-black text-white text-3xl">100%</span>
-                        </div>
-
-                        <!-- Card Mockup -->
-                        <div class="aspect-[2/3] bg-gradient-to-br from-ungevil-gold to-yellow-600 rounded-xl p-4 flex flex-col justify-between transform rotate-12 translate-y-4 hover:translate-y-0 transition shadow-2xl">
-                            <div class="flex justify-between">
-                                <i data-lucide="zap" class="text-black w-6 h-6"></i>
-                                <span class="font-mono text-[10px] font-bold">NO. 01</span>
-                            </div>
-                            <h4 class="font-black text-4xl italic leading-none">GO.</h4>
-                        </div>
-
-                    </div>
-                    
-                    <!-- Poster Mockup Strip -->
-                    <div class="mt-20 flex gap-4 overflow-hidden opacity-50">
-                        <div class="h-32 w-24 bg-white/10 rounded-lg"></div>
-                        <div class="h-32 w-24 bg-white/10 rounded-lg"></div>
-                        <div class="h-32 w-24 bg-white/10 rounded-lg"></div>
-                        <div class="h-32 w-24 bg-white/10 rounded-lg"></div>
-                        <div class="h-32 w-24 bg-white/10 rounded-lg"></div>
-                    </div>
-                </div>
+        <!-- Content Container -->
+        <div id="grants-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards will be injected here -->
+            <div class="col-span-full text-center py-20">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-ungevil-light mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400">Henter data fra Unge Vil databasen...</p>
             </div>
-        </section>
-
-        <!-- Social Media -->
-        <section id="some" class="mb-40 scroll-mt-24">
-            <h2 class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.4em] mb-12">05. Social Presence</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                
-                <!-- Instagram Carousel Mockup -->
-                <div class="md:col-span-2 bg-gray-50 dark:bg-gray-900 rounded-[2.5rem] p-10 border border-gray-100 dark:border-gray-800 relative overflow-hidden transition-colors">
-                    <h4 class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-8">Carousel Post</h4>
-                    
-                    <div class="flex gap-4 overflow-x-auto pb-4 snap-x scrollbar-hide">
-                        <!-- Slide 1 -->
-                        <div class="flex-shrink-0 w-64 aspect-square bg-ungevil rounded-2xl p-6 flex flex-col justify-center snap-center shadow-lg">
-                            <h3 class="text-3xl font-black text-white italic leading-none">HVA ER<br>GREIA?</h3>
-                        </div>
-                        <!-- Slide 2 -->
-                        <div class="flex-shrink-0 w-64 aspect-square bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6 flex flex-col justify-center snap-center shadow-lg">
-                            <p class="text-sm font-bold text-gray-900 dark:text-white leading-relaxed">Sveip for å lære mer.</p>
-                            <div class="mt-4 flex gap-2">
-                                <div class="w-2 h-2 rounded-full bg-ungevil"></div>
-                                <div class="w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-600"></div>
-                                <div class="w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-600"></div>
-                            </div>
-                        </div>
-                        <!-- Slide 3 -->
-                        <div class="flex-shrink-0 w-64 aspect-square bg-ungevil-navy rounded-2xl p-6 flex flex-col justify-center items-center text-center snap-center shadow-lg">
-                            <div class="w-12 h-12 bg-ungevil-gold rounded-full flex items-center justify-center mb-4 text-black font-bold">
-                                <i data-lucide="arrow-right"></i>
-                            </div>
-                            <h3 class="text-xl font-black text-white uppercase">Link i bio</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Story Mockup -->
-                <div class="bg-black rounded-[2.5rem] aspect-[9/16] relative overflow-hidden p-6 flex flex-col shadow-2xl border border-gray-800">
-                    <img src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=1000&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-60">
-                    <div class="absolute inset-0 bg-gradient-to-t from-ungevil via-transparent to-black/50"></div>
-                    
-                    <div class="relative z-10 flex flex-col h-full">
-                        <div class="flex items-center gap-2">
-                            <img src="favicon.png" class="w-8 h-8 rounded-full border border-white">
-                            <span class="text-white font-bold text-xs shadow-black drop-shadow-md">ungevil</span>
-                        </div>
-                        
-                        <div class="mt-auto">
-                            <div class="bg-white text-black px-4 py-2 rounded-xl inline-block transform -rotate-2 mb-4 shadow-lg">
-                                <span class="font-black text-xl italic">NYHET! 🔥</span>
-                            </div>
-                            <h2 class="text-4xl font-black text-white italic leading-none mb-8 drop-shadow-lg">KOMMER<br>SNART</h2>
-                            
-                            <div class="bg-white/20 backdrop-blur rounded-full h-1 w-full mb-2">
-                                <div class="bg-white h-full w-2/3 rounded-full"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+        </div>
+        
+        <div id="no-results" class="hidden text-center py-20 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-600">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
+                <i class="fa-solid fa-folder-open text-gray-400 dark:text-gray-500 text-2xl"></i>
             </div>
-        </section>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Ingen treff</h3>
+            <p class="text-gray-500 dark:text-gray-400">Prøv å justere søket eller filtrene dine.</p>
+            <button onclick="resetFilters()" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ungevil-DEFAULT dark:text-gray-900 bg-ungevil-bg dark:bg-ungevil-light hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ungevil-DEFAULT">
+                Nullstill filter
+            </button>
+        </div>
 
     </main>
 
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto transition-colors duration-200">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
+            <div class="flex justify-center md:order-2 space-x-6">
+                <span class="text-gray-400 text-sm">Oppdatert automatisk fra Google Sheets</span>
+            </div>
+            <div class="mt-8 md:mt-0 md:order-1">
+                <p class="text-center text-base text-gray-400">
+                    &copy; 2026 Unge Vil. Lagret lokalt i din nettleser.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Logic -->
     <script>
-        lucide.createIcons();
+        // --- Configuration ---
+        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQMpKXME5JFZ2Xgpy0zGYLpXATZBxR0tXtkk_hEKPzqovFlaBExE9wve1piVfmpTvkAzg5c5Ly5A3IY/pub?output=csv';
 
-        // Dark Mode Logic
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const htmlElement = document.documentElement;
+        // --- State ---
+        let allGrants = [];
+        let filteredGrants = []; 
+        let uniqueStatuses = new Set();
+        let currentView = 'grid'; 
+        let favorites = JSON.parse(localStorage.getItem('ungevil_favorites') || '[]');
+        let showFavoritesOnly = false;
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initDarkMode(); // Initialize theme
+            fetchData();
+            updateFavButtonState();
+            
+            // Event Listeners
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('deadlineFilter').addEventListener('change', applyFilters);
+            document.getElementById('sortFilter').addEventListener('change', applyFilters);
+        });
 
-        // Check local storage or system preference
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            htmlElement.classList.add('dark');
-        } else {
-            htmlElement.classList.remove('dark');
+        // --- Dark Mode Logic ---
+        function initDarkMode() {
+            // Check local storage or system preference
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                updateLogoAndIcon(true);
+            } else {
+                document.documentElement.classList.remove('dark');
+                updateLogoAndIcon(false);
+            }
         }
 
-        themeToggleBtn.addEventListener('click', () => {
-            htmlElement.classList.toggle('dark');
-            if (htmlElement.classList.contains('dark')) {
-                localStorage.theme = 'dark';
-            } else {
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
                 localStorage.theme = 'light';
+                updateLogoAndIcon(false);
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+                updateLogoAndIcon(true);
             }
-        });
+        }
+
+        function updateLogoAndIcon(isDark) {
+            const logo = document.getElementById('navbar-logo');
+            const icon = document.getElementById('dark-mode-icon');
+            
+            if (isDark) {
+                // Dark Mode: Using 'dark-line' because user said the names are swapped
+                logo.src = 'UngeVil-dark-line.png'; 
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                // Light Mode: Using 'light-line' because user said the names are swapped
+                logo.src = 'UngeVil-light-line.png'; 
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        // --- Helpers: Date Parsing ---
+        function parseGrantDate(dateStr) {
+            if (!dateStr || dateStr.toLowerCase().includes('løpende') || dateStr.length < 3) {
+                return null; // Represents infinite/unknown
+            }
+            
+            // Attempt to parse "DD.MM"
+            const parts = dateStr.split('.');
+            if (parts.length >= 2) {
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+                const now = new Date();
+                let year = now.getFullYear();
+                
+                // Create date object for this year
+                let d = new Date(year, month, day);
+                
+                // If this date has already passed significantly (e.g. more than 30 days ago), 
+                // assume it's for next year.
+                if (d < new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000))) {
+                    d.setFullYear(year + 1);
+                }
+                return d;
+            }
+            return null;
+        }
+
+        function getDaysUntil(dateObj) {
+            if (!dateObj) return Infinity;
+            const now = new Date();
+            // Reset time needed for accurate day diff
+            now.setHours(0,0,0,0);
+            dateObj.setHours(0,0,0,0);
+            const diffTime = dateObj - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        function formatDaysRemaining(days) {
+            if (days === Infinity) return null;
+            if (days < 0) return { text: `Frist utløp for ${Math.abs(days)} dager siden`, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' };
+            if (days === 0) return { text: 'Fristen er i dag!', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30', icon: 'fa-exclamation-circle' };
+            if (days === 1) return { text: '1 dag igjen', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30', icon: 'fa-clock' };
+            if (days <= 7) return { text: `${days} dager igjen`, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20', icon: 'fa-clock' };
+            if (days <= 30) return { text: `${days} dager igjen`, color: 'text-ungevil-dark dark:text-ungevil-light', bg: 'bg-purple-50 dark:bg-purple-900/20', icon: 'fa-calendar-day' };
+            return { text: `${days} dager til frist`, color: 'text-gray-500 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-700', icon: 'fa-calendar' };
+        }
+
+        // --- Helpers: Sum Parsing ---
+        function parseSum(sumStr) {
+            if (!sumStr) return 0;
+            // Extract first number found, remove dots
+            const clean = sumStr.replace(/\./g, '').replace(/,/g, '');
+            const match = clean.match(/(\d+)/);
+            return match ? parseInt(match[0], 10) : 0;
+        }
+
+        // --- View Switching ---
+        function setView(view) {
+            currentView = view;
+            
+            const btnGrid = document.getElementById('btn-grid');
+            const btnList = document.getElementById('btn-list');
+            
+            if (view === 'grid') {
+                btnGrid.classList.add('active');
+                btnList.classList.remove('active');
+            } else {
+                btnGrid.classList.remove('active');
+                btnList.classList.add('active');
+            }
+
+            const container = document.getElementById('grants-container');
+            if (view === 'grid') {
+                container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+            } else {
+                container.className = "flex flex-col gap-3";
+            }
+            renderGrants(filteredGrants);
+        }
+
+        // --- Favorites Logic ---
+        function toggleFavorite(name) {
+            if (favorites.includes(name)) {
+                favorites = favorites.filter(n => n !== name);
+            } else {
+                favorites.push(name);
+            }
+            localStorage.setItem('ungevil_favorites', JSON.stringify(favorites));
+            
+            if (showFavoritesOnly) {
+                applyFilters();
+            } else {
+                renderGrants(filteredGrants); 
+            }
+        }
+
+        function toggleOnlyFavorites() {
+            showFavoritesOnly = !showFavoritesOnly;
+            updateFavButtonState();
+            applyFilters();
+        }
+
+        function updateFavButtonState() {
+            const btn = document.getElementById('favFilterBtn');
+            if (showFavoritesOnly) {
+                btn.classList.add('text-red-500', 'bg-red-50', 'dark:bg-red-900/20');
+                btn.classList.remove('text-gray-500', 'dark:text-gray-400');
+                btn.innerHTML = `<i class="fa-solid fa-heart"></i> <span class="hidden sm:inline">Viser favoritter</span>`;
+            } else {
+                btn.classList.remove('text-red-500', 'bg-red-50', 'dark:bg-red-900/20');
+                btn.classList.add('text-gray-500', 'dark:text-gray-400');
+                btn.innerHTML = `<i class="fa-regular fa-heart"></i> <span class="hidden sm:inline">Mine favoritter</span>`;
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('deadlineFilter').value = 'all';
+            document.getElementById('sortFilter').value = 'deadline';
+            showFavoritesOnly = false;
+            updateFavButtonState();
+            applyFilters();
+        }
+
+        // --- Data Fetching ---
+        async function fetchData() {
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                const csvText = await response.text();
+                
+                const rows = csvText.split('\n');
+                let headerRowIndex = rows.findIndex(row => row.includes('Tilskuddsordning'));
+                
+                if (headerRowIndex === -1) headerRowIndex = 3; 
+
+                const cleanCsv = rows.slice(headerRowIndex).join('\n');
+
+                Papa.parse(cleanCsv, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        processData(results.data);
+                    }
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('grants-container').innerHTML = `<div class="col-span-full text-center text-red-500">Feil ved lasting av data.</div>`;
+            }
+        }
+
+        function processData(data) {
+            allGrants = data.map(row => {
+                const rawStatus = row['Status'] ? row['Status'].trim() : '';
+                if(rawStatus) uniqueStatuses.add(rawStatus);
+
+                const parsedDate = parseGrantDate(row['Søknadsfrist']);
+                const daysUntil = getDaysUntil(parsedDate);
+                const numericSum = parseSum(row['Sum']);
+
+                return {
+                    id: row['Tilskuddsordning'], 
+                    deadline: row['Søknadsfrist'] || 'Ukjent',
+                    parsedDate: parsedDate,
+                    daysUntil: daysUntil,
+                    name: row['Tilskuddsordning'] || 'Uten navn',
+                    purpose: row['Formål'] || '',
+                    sum: row['Sum'] || '',
+                    numericSum: numericSum,
+                    link: row['Link'] || '#',
+                    status: rawStatus || 'Ikke startet',
+                };
+            }).filter(item => item.name !== 'Uten navn' && item.name !== 'NOT IN USE');
+
+            filteredGrants = [...allGrants];
+            populateStatusFilter();
+            renderStats();
+            applyFilters(); 
+        }
+
+        // --- Rendering ---
+        function getStatusStyle(status) {
+            const s = status.toLowerCase();
+            // Note: Colors tweaked for dark mode support (using standard Tailwind palette for consistency)
+            if (s.includes('innvilget') || s.includes('fått')) return { 
+                bg: 'bg-ungevil-mint dark:bg-teal-900/50', 
+                text: 'text-teal-900 dark:text-teal-200', 
+                label: 'Innvilget', 
+                icon: 'fa-check' 
+            };
+            if (s.includes('avslått') || s.includes('nei')) return { 
+                bg: 'bg-ungevil-coral dark:bg-red-900/50', 
+                text: 'text-red-900 dark:text-red-200', 
+                label: 'Avslått', 
+                icon: 'fa-xmark' 
+            };
+            if (s.includes('sendt') || s.includes('søkt')) return { 
+                bg: 'bg-ungevil-blue dark:bg-blue-900/50', 
+                text: 'text-blue-900 dark:text-blue-200', 
+                label: 'Sendt inn', 
+                icon: 'fa-paper-plane' 
+            };
+            if (s.includes('jobber') || s.includes('påbegynt')) return { 
+                bg: 'bg-ungevil-gold dark:bg-yellow-900/50', 
+                text: 'text-yellow-900 dark:text-yellow-200', 
+                label: 'Arbeider med', 
+                icon: 'fa-pen-to-square' 
+            };
+            if (s.includes('ikke startet') || s === '') return { 
+                bg: 'bg-gray-200 dark:bg-gray-700', 
+                text: 'text-gray-600 dark:text-gray-300', 
+                label: 'Ikke startet', 
+                icon: 'fa-circle-pause' 
+            };
+            return { 
+                bg: 'bg-ungevil-light dark:bg-purple-900/50', 
+                text: 'text-white dark:text-purple-200', 
+                label: status, 
+                icon: 'fa-info-circle' 
+            };
+        }
+
+        function populateStatusFilter() {
+            const select = document.getElementById('statusFilter');
+            select.innerHTML = '<option value="all">Alle Statuser</option>';
+            Array.from(uniqueStatuses).sort().forEach(status => {
+                const option = document.createElement('option');
+                option.value = status;
+                option.innerText = status;
+                select.appendChild(option);
+            });
+        }
+
+        function renderStats() {
+            const container = document.getElementById('stats-container');
+            const total = allGrants.length;
+            const ongoing = allGrants.filter(g => g.deadline.toLowerCase().includes('løpende')).length;
+            const active = allGrants.filter(g => {
+                const s = g.status.toLowerCase();
+                return s.includes('jobber') || s.includes('påbegynt');
+            }).length;
+            
+            const urgent = allGrants.filter(g => g.daysUntil >= 0 && g.daysUntil <= 30).length;
+
+            const createStatCard = (title, value, icon, colorClass, subtext) => `
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between transition-all hover:shadow-md">
+                    <div>
+                        <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">${title}</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">${value}</p>
+                        ${subtext ? `<p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${subtext}</p>` : ''}
+                    </div>
+                    <div class="h-12 w-12 rounded-full ${colorClass} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center">
+                        <i class="fa-solid ${icon} text-xl ${colorClass.replace('bg-', 'text-')}"></i>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = `
+                ${createStatCard('Totalt antall', total, 'fa-list', 'bg-ungevil-DEFAULT', 'Tilgjengelige ordninger')}
+                ${createStatCard('Snart frist', urgent, 'fa-stopwatch', 'bg-ungevil-coral', 'Innen 30 dager')}
+                ${createStatCard('Under arbeid', active, 'fa-pen-nib', 'bg-ungevil-gold', 'Aktive prosesser')}
+                ${createStatCard('Løpende', ongoing, 'fa-infinity', 'bg-ungevil-mint', 'Søk når som helst')}
+            `;
+        }
+
+        function renderGrants(grants) {
+            const container = document.getElementById('grants-container');
+            const noResults = document.getElementById('no-results');
+
+            if (grants.length === 0) {
+                container.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            } else {
+                container.classList.remove('hidden');
+                noResults.classList.add('hidden');
+            }
+
+            container.innerHTML = grants.map(grant => {
+                const style = getStatusStyle(grant.status);
+                const isFav = favorites.includes(grant.name);
+                const deadlineInfo = formatDaysRemaining(grant.daysUntil);
+                
+                // Urgency Badge HTML
+                let urgencyBadge = '';
+                if (deadlineInfo) {
+                    urgencyBadge = `<span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md ${deadlineInfo.bg} ${deadlineInfo.color} mb-1">
+                        <i class="fa-solid ${deadlineInfo.icon}"></i> ${deadlineInfo.text}
+                    </span>`;
+                } else if (grant.deadline.toLowerCase().includes('løpende')) {
+                    urgencyBadge = `<span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-green-50 dark:bg-green-900/30 text-ungevil-mint mb-1">
+                        <i class="fa-solid fa-infinity"></i> Løpende
+                    </span>`;
+                }
+
+                // Truncate logic
+                const purpose = grant.purpose.length > 120 ? grant.purpose.substring(0, 120) + '...' : grant.purpose;
+                const purposeShort = grant.purpose.length > 80 ? grant.purpose.substring(0, 80) + '...' : grant.purpose;
+
+                if (currentView === 'grid') {
+                    // --- CARD VIEW HTML ---
+                    return `
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border ${isFav ? 'border-ungevil-DEFAULT ring-1 ring-ungevil-light' : 'border-gray-100 dark:border-gray-700'} shadow-sm flex flex-col h-full card-hover transition-all duration-300 relative overflow-hidden group">
+                        
+                        <!-- Top Bar -->
+                        <div class="h-1 w-full ${style.bg.replace('bg-opacity-10', '')}"></div>
+                        
+                        <div class="p-6 flex-grow flex flex-col">
+                            
+                            <!-- Header: Status + Heart -->
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.bg === 'bg-ungevil-light' ? '' : 'bg-opacity-20 dark:bg-opacity-30'} ${style.text}">
+                                    <i class="fa-solid ${style.icon} mr-1.5"></i> ${style.label}
+                                </span>
+                                <button onclick="toggleFavorite('${grant.name.replace(/'/g, "\\'")}')" class="heart-beat transition-transform focus:outline-none">
+                                    <i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-gray-300 dark:text-gray-600'} fa-heart text-lg hover:text-red-400"></i>
+                                </button>
+                            </div>
+
+                            <!-- Deadline Urgency -->
+                            <div class="mb-2">
+                                ${urgencyBadge}
+                            </div>
+
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 leading-tight group-hover:text-ungevil-DEFAULT dark:group-hover:text-ungevil-light transition-colors">
+                                ${grant.name}
+                            </h3>
+
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-md px-2 py-1 flex items-center gap-2 border border-yellow-100 dark:border-yellow-900/30">
+                                    <i class="fa-solid fa-coins text-ungevil-gold text-xs"></i>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">${grant.sum || 'Ikke spesifisert'}</span>
+                                </div>
+                            </div>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 flex-grow leading-relaxed">
+                                ${purpose || 'Ingen beskrivelse tilgjengelig.'}
+                            </p>
+
+                            <div class="mt-auto pt-4 border-t border-gray-50 dark:border-gray-700 flex justify-between items-center">
+                                ${grant.link && grant.link.length > 5 ? 
+                                    `<a href="${grant.link}" target="_blank" class="text-sm font-medium text-ungevil-DEFAULT dark:text-ungevil-light hover:text-ungevil-dark dark:hover:text-white inline-flex items-center gap-1 transition-colors">
+                                        Gå til søknad <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                                    </a>` : 
+                                    `<span class="text-sm text-gray-300 dark:text-gray-600 italic">Ingen lenke</span>`
+                                }
+                                <div class="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                                    ${grant.deadline}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                } else {
+                    // --- LIST VIEW HTML ---
+                    return `
+                    <div class="bg-white dark:bg-gray-800 rounded-lg border ${isFav ? 'border-ungevil-DEFAULT' : 'border-gray-100 dark:border-gray-700'} shadow-sm hover:shadow-md transition-all p-4 flex flex-col md:flex-row md:items-center gap-4 group">
+                        
+                        <div class="hidden md:block w-1.5 h-12 rounded-full ${style.bg.replace('bg-opacity-10', '')} flex-shrink-0"></div>
+                        
+                        <!-- Fav Button (List view) -->
+                         <button onclick="toggleFavorite('${grant.name.replace(/'/g, "\\'")}')" class="md:hidden absolute top-4 right-4 focus:outline-none">
+                            <i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-gray-300 dark:text-gray-600'} fa-heart text-lg"></i>
+                        </button>
+
+                        <div class="flex-grow min-w-0">
+                            <div class="flex items-center gap-3 mb-1">
+                                <button onclick="toggleFavorite('${grant.name.replace(/'/g, "\\'")}')" class="hidden md:block focus:outline-none">
+                                    <i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-gray-300 dark:text-gray-600'} fa-heart hover:text-red-400"></i>
+                                </button>
+                                <h3 class="font-bold text-gray-900 dark:text-white text-lg group-hover:text-ungevil-DEFAULT dark:group-hover:text-ungevil-light truncate">
+                                    ${grant.name}
+                                </h3>
+                                <span class="md:hidden inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.bg === 'bg-ungevil-light' ? '' : 'bg-opacity-20 dark:bg-opacity-30'} ${style.text}">
+                                    ${style.label}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate md:w-3/4">${purposeShort || 'Ingen beskrivelse.'}</p>
+                             <div class="mt-1 md:hidden">
+                                ${urgencyBadge}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0">
+                            
+                            <div class="flex flex-col items-start md:items-end w-28 flex-shrink-0">
+                                <span class="text-xs text-gray-400 dark:text-gray-500 uppercase">Frist</span>
+                                ${deadlineInfo ? 
+                                    `<span class="text-sm font-semibold ${deadlineInfo.color}">${grant.deadline}</span>` : 
+                                    `<span class="text-sm text-gray-600 dark:text-gray-400">${grant.deadline}</span>`
+                                }
+                            </div>
+
+                            <div class="hidden md:flex justify-end w-32 flex-shrink-0">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.bg === 'bg-ungevil-light' ? '' : 'bg-opacity-20 dark:bg-opacity-30'} ${style.text}">
+                                    <i class="fa-solid ${style.icon} mr-1.5"></i> ${style.label}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-end w-10 flex-shrink-0">
+                                ${grant.link && grant.link.length > 5 ? 
+                                    `<a href="${grant.link}" target="_blank" class="h-8 w-8 rounded-full bg-gray-50 dark:bg-gray-700 hover:bg-ungevil-bg dark:hover:bg-ungevil-light/20 text-gray-400 dark:text-gray-500 hover:text-ungevil-DEFAULT dark:hover:text-ungevil-light flex items-center justify-center transition-colors">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>` : 
+                                    `<span class="h-8 w-8 flex items-center justify-center text-gray-200 dark:text-gray-700"><i class="fa-solid fa-ban"></i></span>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        // --- Filtering Logic ---
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const statusType = document.getElementById('statusFilter').value;
+            const deadlineType = document.getElementById('deadlineFilter').value;
+            const sortType = document.getElementById('sortFilter').value;
+
+            // 1. Filter
+            filteredGrants = allGrants.filter(grant => {
+                // Search
+                const matchesSearch = 
+                    grant.name.toLowerCase().includes(query) || 
+                    grant.purpose.toLowerCase().includes(query) ||
+                    grant.status.toLowerCase().includes(query);
+
+                // Status
+                let matchesStatus = true;
+                if (statusType !== 'all') {
+                    matchesStatus = grant.status === statusType;
+                }
+
+                // Deadline
+                let matchesDeadline = true;
+                const isOngoing = grant.deadline.toLowerCase().includes('løpende');
+                if (deadlineType === 'ongoing') {
+                    matchesDeadline = isOngoing;
+                } else if (deadlineType === 'upcoming') {
+                    matchesDeadline = !isOngoing && grant.daysUntil >= 0;
+                } else if (deadlineType === 'passed') {
+                    matchesDeadline = !isOngoing && grant.daysUntil < 0 && grant.daysUntil !== Infinity;
+                }
+
+                // Favorites
+                let matchesFav = true;
+                if (showFavoritesOnly) {
+                    matchesFav = favorites.includes(grant.name);
+                }
+
+                return matchesSearch && matchesStatus && matchesDeadline && matchesFav;
+            });
+
+            // 2. Sort
+            filteredGrants.sort((a, b) => {
+                if (sortType === 'deadline') {
+                    const getSortValue = (g) => {
+                        if (g.deadline.toLowerCase().includes('løpende')) return 99999; 
+                        if (g.daysUntil === Infinity) return 100000; 
+                        if (g.daysUntil < 0) return 200000; 
+                        return g.daysUntil; 
+                    };
+                    return getSortValue(a) - getSortValue(b);
+                }
+                
+                if (sortType === 'name') {
+                    return a.name.localeCompare(b.name);
+                }
+
+                if (sortType === 'sum') {
+                    return b.numericSum - a.numericSum;
+                }
+                return 0;
+            });
+
+            renderGrants(filteredGrants);
+        }
+
     </script>
 </body>
 </html>
