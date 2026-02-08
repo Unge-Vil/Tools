@@ -16,3 +16,9 @@ En enkel portal for oversikt og arbeid med tilskudd, støtteordninger og finansi
 
 👉 **Åpne verktøyet:**  
 [tilskudd.html](./tilskudd.html)
+
+#### Mail signatur
+En enkel side for å generere mail signatur.
+
+👉 **Åpne verktøyet:**  
+[mailsign.html](./mailsign.html)
