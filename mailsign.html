@@ -1,0 +1,285 @@
+import React, { useState, useRef } from 'react';
+import { Copy, Check, RefreshCw, Smartphone, Mail, Globe, User, Briefcase, MessageSquare } from 'lucide-react';
+
+const UngeVilSignature = () => {
+  // State for form fields
+  const [formData, setFormData] = useState({
+    greeting: 'Vennlig hilsen',
+    name: 'Navn Navnesen',
+    title: 'Frivilligkoordinator',
+    phone: '900 00 000',
+    email: 'navn@ungevil.no',
+    website: 'www.ungevil.no'
+  });
+
+  const [copied, setCopied] = useState(false);
+  const signatureRef = useRef(null);
+
+  // Brand Colors from guidelines
+  const colors = {
+    primary: '#9333EA', // Primary Purple
+    navy: '#1E1B4B',    // Deep Navy (Text)
+    bgTint: '#FBF7FF'   // Background Tint
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Pre-defined greetings
+  const greetings = [
+    "Vennlig hilsen",
+    "Best regards",
+    "Vennlig hilsen / Best regards",
+    "Mvh"
+  ];
+
+  // Generate the HTML string for the signature
+  // Ultra-safe HTML table structure
+  const getSignatureHTML = () => {
+    return `
+      <table cellpadding="0" cellspacing="0" border="0" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.4; color: ${colors.navy};">
+        <tr>
+          <td valign="top" style="border-left: 3px solid ${colors.primary}; padding-left: 15px;">
+            <div style="margin-bottom: 8px; font-size: 14px; color: ${colors.navy};">
+              ${formData.greeting}
+            </div>
+            <strong style="font-size: 16px; color: ${colors.primary}; font-weight: 700; display: block;">${formData.name}</strong>
+            <div style="font-size: 14px; color: ${colors.navy}; font-weight: 500; margin-bottom: 10px;">
+              ${formData.title}
+            </div>
+            <div style="font-size: 12px; color: #4B5563; line-height: 1.6;">
+              <span style="color: ${colors.primary}; font-weight: bold; min-width: 20px; display: inline-block;">E:</span> <a href="mailto:${formData.email}" style="color: ${colors.navy}; text-decoration: none;">${formData.email}</a><br>
+              ${formData.phone ? `<span style="color: ${colors.primary}; font-weight: bold; min-width: 20px; display: inline-block;">M:</span> <a href="tel:${formData.phone.replace(/\s/g, '')}" style="color: ${colors.navy}; text-decoration: none;">${formData.phone}</a><br>` : ''}
+              <span style="color: ${colors.primary}; font-weight: bold; min-width: 20px; display: inline-block;">W:</span> <a href="https://${formData.website}" style="color: ${colors.navy}; text-decoration: none;">${formData.website}</a>
+            </div>
+          </td>
+        </tr>
+      </table>
+    `;
+  };
+
+  const copySignature = () => {
+    if (!signatureRef.current) return;
+
+    const range = document.createRange();
+    range.selectNode(signatureRef.current);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+
+    try {
+      document.execCommand('copy');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.error('Klarte ikke kopiere', err);
+      alert('Klarte ikke kopiere automatisk. Vennligst marker signaturen og trykk Ctrl+C / Cmd+C.');
+    }
+
+    window.getSelection().removeAllRanges();
+  };
+
+  return (
+    <div className="min-h-screen p-6 font-sans text-gray-800" style={{ backgroundColor: colors.bgTint }}>
+      
+      {/* Header */}
+      <div className="max-w-5xl mx-auto mb-8 flex items-center gap-4">
+        <div className="h-10 w-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md">
+          UV
+        </div>
+        <div>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Unge Vil</h1>
+          <p className="text-purple-700 font-medium">Ren Tekst-signatur</p>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        {/* Input Form */}
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-purple-100">
+          <div className="mb-6 pb-4 border-b border-gray-100">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <span className="w-1 h-6 bg-purple-600 rounded-full block"></span>
+              Rediger informasjonen
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {/* Greeting Selection */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Hilsen</label>
+              <div className="relative mb-2">
+                <MessageSquare size={18} className="absolute left-3 top-3 text-purple-400" />
+                <input
+                  type="text"
+                  name="greeting"
+                  value={formData.greeting}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
+                  placeholder="Vennlig hilsen"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {greetings.map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setFormData(prev => ({ ...prev, greeting: g }))}
+                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                      formData.greeting === g 
+                        ? 'bg-purple-100 border-purple-300 text-purple-800 font-medium' 
+                        : 'bg-white border-gray-200 text-gray-600 hover:border-purple-300'
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Name */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Navn</label>
+              <div className="relative">
+                <User size={18} className="absolute left-3 top-3 text-purple-400" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
+                  placeholder="Ditt Navn"
+                />
+              </div>
+            </div>
+
+            {/* Title */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Tittel / Rolle</label>
+              <div className="relative">
+                <Briefcase size={18} className="absolute left-3 top-3 text-purple-400" />
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
+                  placeholder="Din Tittel"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">E-post</label>
+              <div className="relative">
+                <Mail size={18} className="absolute left-3 top-3 text-purple-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
+                  placeholder="navn@ungevil.no"
+                />
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Mobil (Valgfritt)</label>
+              <div className="relative">
+                <Smartphone size={18} className="absolute left-3 top-3 text-purple-400" />
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
+                  placeholder="+47 000 00 000"
+                />
+              </div>
+            </div>
+
+             {/* Website */}
+             <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Nettside</label>
+              <div className="relative">
+                <Globe size={18} className="absolute left-3 top-3 text-purple-400" />
+                <input
+                  type="text"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
+                  placeholder="www.ungevil.no"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Preview Area */}
+        <div className="flex flex-col gap-6">
+          <div className="bg-white p-8 rounded-2xl shadow-xl border border-purple-100 h-fit">
+            <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-900">Forhåndsvisning</h2>
+              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-100">100% E-post sikker</span>
+            </div>
+
+            {/* The Actual Signature Container */}
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 overflow-x-auto">
+              <div 
+                ref={signatureRef} 
+                dangerouslySetInnerHTML={{ __html: getSignatureHTML() }} 
+                className="select-text bg-white p-6 rounded-md inline-block shadow-sm w-full"
+              />
+            </div>
+
+            <div className="mt-8 flex flex-col gap-3">
+              <button
+                onClick={copySignature}
+                className={`
+                  w-full py-3 px-6 rounded-full font-bold text-white shadow-lg transform transition-all duration-200 flex items-center justify-center gap-2
+                  ${copied 
+                    ? 'bg-green-500 hover:bg-green-600 scale-105' 
+                    : 'bg-purple-600 hover:bg-purple-700 hover:-translate-y-1'
+                  }
+                `}
+              >
+                {copied ? <><Check size={20} /> Kopiert!</> : <><Copy size={20} /> Kopier Signatur</>}
+              </button>
+              
+              <p className="text-xs text-center text-gray-500 mt-2">
+                Lim inn direkte i Gmail signatur-feltet (Ctrl+V / Cmd+V).
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Tip Card */}
+          <div className="bg-[#1E1B4B] p-6 rounded-2xl shadow-lg text-white">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-white/10 rounded-lg mt-1">
+                <RefreshCw size={20} className="text-[#2DD4BF]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#FBBF24]">Hvorfor ingen logo?</h3>
+                <p className="text-sm text-gray-300 mt-1 leading-relaxed">
+                  Ved å fjerne logoen unngår du at mailene dine havner i spamfilteret,
+                  blokkeres av Outlook ("Klikk for å laste ned bilder"), eller vises som vedlegg.
+                  <br/><br/>
+                  Den lilla stripen til venstre sikrer at du likevel er tydelig "Unge Vil".
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UngeVilSignature;
